@@ -51,10 +51,7 @@ func NewDockerHandler() *DockerHandler {
 	logrus.Infof("Scanning for container cron entries")
 	for _, container := range containers {
 		if _, ok := container.Labels["cron.schedule"]; ok {
-			err = crontab.AddJob(container.ID, container.Labels, "docker")
-			if err != nil {
-				logrus.Errorf("error adding: %s. Got: %s", container.ID, err)
-			}
+			crontab.AddJob(container.ID, container.Labels, "docker")
 		}
 	}
 
