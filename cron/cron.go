@@ -56,7 +56,7 @@ func (ct *Crontab) AddJob(id string, labels map[string]string, jobType string) e
 	default:
 		logrus.Warnf("Unknown job type: %s", jobType)
 	}
-
+	logrus.Infof("Added: %s, with schedule: %s", id, schedule)
 	return ct.cronRunner.AddJob(schedule, job)
 }
 
@@ -65,4 +65,5 @@ func (ct *Crontab) RemoveJob(id string) {
 	if job, ok := ct.jobs[id]; ok {
 		job.Deactivate()
 	}
+	logrus.Infof("Removed: %s", id)
 }
