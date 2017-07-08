@@ -69,6 +69,7 @@ func (ct *Crontab) AddJob(id string, labels map[string]string, jobType string) e
 func (ct *Crontab) RemoveJob(id string) {
 	if job, ok := ct.jobs[id]; ok {
 		job.Deactivate()
+		logrus.Infof("Removed: %s", id)
 	}
-	logrus.Infof("Removed: %s", id)
+
 }
