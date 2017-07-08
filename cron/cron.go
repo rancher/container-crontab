@@ -56,8 +56,13 @@ func (ct *Crontab) AddJob(id string, labels map[string]string, jobType string) e
 	default:
 		logrus.Warnf("Unknown job type: %s", jobType)
 	}
-	logrus.Infof("Added: %s, with schedule: %s", id, schedule)
-	return ct.cronRunner.AddJob(schedule, job)
+	err := ct.cronRunner.AddJob(schedule, job)
+	if err != nil {
+		logrus.Errorf("error adding: %s. Got: %s", id, err)
+	} else {
+		logrus.Infof("Added: %s, with schedule: %s", id, schedule)
+	}
+	return err
 }
 
 // RemoveJob remove a docker job from the cron queue
