@@ -35,13 +35,13 @@ func (ct *Crontab) GetEntries() []*cron.Entry {
 }
 
 // AddJob Adds a docker job to the crontab
-func (ct *Crontab) AddJob(id string, labels map[string]string, jobType string) {
+func (ct *Crontab) AddJob(id string, labels map[string]string, jobType string) error {
 	var schedule string
 	var job cron.Job
 
 	if ct.jobs[id] != nil {
 		logrus.Debugf("Job %s, already exists", id)
-		return
+		return nil
 	}
 
 	if sched, ok := labels["cron.schedule"]; ok {
@@ -59,9 +59,10 @@ func (ct *Crontab) AddJob(id string, labels map[string]string, jobType string) {
 	err := ct.cronRunner.AddJob(schedule, job)
 	if err != nil {
 		logrus.Errorf("error adding: %s. Got: %s", id, err)
-	} else {
-		logrus.Infof("Added: %s, with schedule: %s", id, schedule)
+		return err
 	}
+	logrus.Infof("Added: %s, with schedule: %s", id, schedule)
+	return nil
 }
 
 // RemoveJob remove a docker job from the cron queue
