@@ -38,6 +38,7 @@ func NewDockerHandler() *DockerHandler {
 		logrus.Fatal(err)
 		return nil
 	}
+	defer dClient.Close()
 
 	containers, err := dClient.ContainerList(context.Background(), types.ContainerListOptions{
 		All: true,
@@ -75,8 +76,6 @@ func (dh DockerHandler) Handle(msg Message) {
 			dh.crontab.RemoveJob(msg.ID)
 		}
 	}
-
-	dh.crontab.GetEntries()
 }
 
 //DockerEventRouter is the Docker event handler implementation

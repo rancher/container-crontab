@@ -59,6 +59,7 @@ func (dj *DockerJob) resetErr() {
 func (dj *DockerJob) start() {
 	var client *client.Client
 	client, dj.lastError = getDockerClient()
+	defer client.Close()
 
 	if dj.Err() == nil {
 		dj.lastError = client.ContainerStart(context.Background(), dj.ID, types.ContainerStartOptions{})
@@ -68,6 +69,7 @@ func (dj *DockerJob) start() {
 func (dj *DockerJob) restart() {
 	var client *client.Client
 	client, dj.lastError = getDockerClient()
+	defer client.Close()
 
 	if dj.Err() == nil {
 		dj.lastError = client.ContainerRestart(context.Background(), dj.ID, &dj.restartTimeout)
@@ -77,6 +79,7 @@ func (dj *DockerJob) restart() {
 func (dj *DockerJob) stop() {
 	var client *client.Client
 	client, dj.lastError = getDockerClient()
+	defer client.Close()
 
 	if dj.Err() == nil {
 		dj.lastError = client.ContainerStop(context.Background(), dj.ID, &dj.restartTimeout)
