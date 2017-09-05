@@ -9,7 +9,10 @@ import (
 )
 
 // VERSION of the application
-var VERSION = "v0.0.0-dev"
+var (
+	MetadataURL = "http://169.254.169.250/2016-17-29"
+	VERSION     = "v0.0.0-dev"
+)
 
 func beforeApp(c *cli.Context) error {
 	if c.GlobalBool("debug") {
@@ -29,18 +32,35 @@ func main() {
 		cli.BoolFlag{
 			Name: "debug,d",
 		},
+		cli.BoolFlag{
+			Name:  "rancher-mode,r",
+			Usage: "Allow Rancher ",
+		},
+		cli.StringFlag{
+			Name:  "metadata-url",
+			Value: MetadataURL,
+			Usage: "Provide full URL of Metadata",
+		},
 	}
 
 	app.Run(os.Args)
 }
 
 func start(c *cli.Context) error {
-	router, err := events.NewEventRouter()
+	handler, err := events.NewDockerHandler(&events.DockerHandlerOpts{
+		RancherMode: c.GlobalBool("rancher-mode"),
+		MetadataURL: c.GlobalString("metadata-url"),
+	})
 	if err != nil {
-		logrus.Fatal(err)
+		return err
 	}
 
-	events.StartRouter(router)
+	router, err := events.NewEventRouter()
+	if err != nil {
+		return err
+	}
+
+	events.StartRouter(router, handler)
 
 	return nil
 }
