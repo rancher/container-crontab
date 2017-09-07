@@ -10,7 +10,7 @@ import (
 
 // VERSION of the application
 var (
-	MetadataURL = "http://169.254.169.250/2016-17-29"
+	MetadataURL = "http://169.254.169.250/2016-07-29"
 	VERSION     = "v0.0.0-dev"
 )
 
@@ -41,6 +41,9 @@ func main() {
 			Value: MetadataURL,
 			Usage: "Provide full URL of Metadata",
 		},
+		cli.BoolFlag{
+			Name: "metrics",
+		},
 	}
 
 	app.Run(os.Args)
@@ -58,6 +61,10 @@ func start(c *cli.Context) error {
 	router, err := events.NewEventRouter()
 	if err != nil {
 		return err
+	}
+
+	if c.GlobalBool("metrics") {
+		go MetricsServer(handler)
 	}
 
 	events.StartRouter(router, handler)

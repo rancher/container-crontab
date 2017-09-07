@@ -143,7 +143,7 @@ func (ct *Crontab) watchRancherMetadata() {
 		for _, job := range ct.jobs {
 			ct.setJobState(job)
 		}
-		time.Sleep(getDuration(60))
+		time.Sleep(getDuration(5))
 	}
 }
 
@@ -160,12 +160,34 @@ func (ct *Crontab) setJobState(job *JobEntry) {
 			logrus.Error(err)
 		}
 
-		if state == "active" {
+		// if the job is inactive...activate
+		if state == "active" && !job.Job.Active {
 			job.Job.Activate()
 		}
 
-		if state != "active" {
+		// if the job is active... Deactivate
+		if state != "active" && job.Job.Active {
 			job.Job.Deactivate()
 		}
 	}
+}
+
+func (ct *Crontab) GetNumberOfActiveJobs() float64 {
+	var i float64
+	for _, job := range ct.jobs {
+		if job.Job.Active {
+			i++
+		}
+	}
+	return i
+}
+
+func (ct *Crontab) GetNumberOfInactiveJobs() float64 {
+	var i float64
+	for _, job := range ct.jobs {
+		if !job.Job.Active {
+			i++
+		}
+	}
+	return i
 }

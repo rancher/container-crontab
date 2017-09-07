@@ -7,6 +7,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/client"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rancher/container-crontab/cron"
 )
 
@@ -20,7 +21,7 @@ type Message *events.Message
 
 // DockerHandler handles docker messages
 type DockerHandler struct {
-	crontab *cron.Crontab
+	Crontab *cron.Crontab
 }
 
 type DockerHandlerOpts struct {
@@ -66,7 +67,7 @@ func NewDockerHandler(opts *DockerHandlerOpts) (*DockerHandler, error) {
 	}
 
 	return &DockerHandler{
-		crontab: crontab,
+		Crontab: crontab,
 	}, nil
 }
 
@@ -77,17 +78,23 @@ func (dh DockerHandler) Handle(msg Message) {
 	if _, ok := msg.Actor.Attributes["cron.schedule"]; ok {
 		if msg.Action == "start" || msg.Action == "create" {
 			logrus.Debugf("Processing %s event for container: %s", msg.Action, msg.ID)
-			dh.crontab.AddJob(msg.ID, msg.Actor.Attributes, "docker")
+			dh.Crontab.AddJob(msg.ID, msg.Actor.Attributes, "docker")
 		}
 
 		if msg.Action == "stop" || msg.Action == "die" {
 			logrus.Debugf("Proccessing %s event for container: %s", msg.Action, msg.ID)
-			dh.crontab.DeactivateJob(msg.ID, msg.Actor.Attributes)
+			dh.Crontab.DeactivateJob(msg.ID, msg.Actor.Attributes)
 		}
 
 		if msg.Action == "destroy" {
 			logrus.Debugf("Processing destroy event for container: %s", msg.ID)
-			dh.crontab.RemoveJob(msg.ID)
+			dh.Crontab.RemoveJob(msg.ID)
 		}
 	}
+}
+
+func (dh DockerHandler) GetJobStats(guage *prometheus.GaugeVec) (*prometheus.GaugeVec, error) {
+	guage.With(prometheus.Labels{"state": "active"}).Set(dh.Crontab.GetNumberOfActiveJobs())
+	guage.With(prometheus.Labels{"state": "inactive"}).Set(dh.Crontab.GetNumberOfInactiveJobs())
+	return guage, nil
 }
