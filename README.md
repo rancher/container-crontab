@@ -9,14 +9,29 @@ A microservice that will perform actions on a Docker container based on cron sch
 
 ## Running
 
+Standard Docker mode:
+
 `./bin/container-crontab`
+
+Rancher Mode:
+
+`./bin/container-crontab --rancher-mode [--metadata-url http://rancher-metadta/latest]`
 
 ## Usage
 
+### Standard Mode:
 Once `container-crontab` is up and running it watches Docker socket events for `create, start and destroy` events.
 If a container is found to have the label `cron.schedule` then it will be added to the crontab based on the schedule.
 
 Cron scheduling rules follow: [Expression Format](https://godoc.org/github.com/robfig/cron#hdr-CRON_Expression_Format)
+
+### Rancher Mode:
+When running in Rancher mode, the service watches Rancher metadata for service state. If the service is in any other mode
+then Active, then the job is disabled. 
+
+It watches metadata on a 5 second interval, so there is a small window where a job could be run when the state is changing. If
+the container is stopped as part of the upgrade or service deactivate, that event will be immediate. When services are reactivated
+there is a 5 second window for the job to be re-activated.
 
 ## Override labels that can be applied
 
@@ -30,6 +45,14 @@ seconds you would like. For instance for 20 seconds: `cron.restart_timeout=20`.
 # Restart every minute
 > docker run -d --label=cron.schedule="0 * * * * ?" ubuntu:16.04 date
 ```
+
+## Metrics
+
+Starting in v0.3.0 the container-crontab exposes a prometheus metrics endpoint `http://<ip>:9191/metrics`.
+From that you can get a guage on the number of Jobs sliced by Active/Inactive states. It also provides other
+golang information about the program.
+
+`rancher_container_crontab_jobs_total{hostnmae, state}`
 
 ## License
 Copyright (c) 2014-2017 [Rancher Labs, Inc.](http://rancher.com)

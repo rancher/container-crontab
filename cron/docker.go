@@ -16,6 +16,7 @@ type DockerJob struct {
 	Action         string
 	Schedule       string
 	Leader         bool
+	Labels         map[string]string
 	Active         bool
 	lastError      error
 	restartTimeout time.Duration
@@ -87,7 +88,7 @@ func (dj *DockerJob) stop() {
 }
 
 func getDockerClient() (*client.Client, error) {
-	return client.NewClient("unix:///var/run/docker.sock", "1.22", nil, map[string]string{})
+	return client.NewEnvClient()
 }
 
 // NewDockerJob creates a DockerJob and sets defaults
@@ -95,6 +96,7 @@ func NewDockerJob(id string, labels map[string]string) *DockerJob {
 	dj := &DockerJob{
 		ID:             id,
 		Schedule:       labels["cron.schedule"],
+		Labels:         labels,
 		Action:         "start",
 		Leader:         false,
 		Active:         true,
@@ -123,12 +125,13 @@ func NewDockerJob(id string, labels map[string]string) *DockerJob {
 	return dj
 }
 
-func getDuration(i int) time.Duration {
-	return time.Duration(i) * time.Second
+// Deactivate Sets the Actve attribute to false. This will skip running
+func (dj *DockerJob) Deactivate() {
+	logrus.Debugf("Deactivating: %s", dj.ID)
+	dj.Active = false
 }
 
-// Deactivate Sets the Active attribute to false. This will skip running
-func (dj *DockerJob) Deactivate() {
-	dj.Active = false
-	logrus.Debugf("Deactivating: %s", dj.ID)
+func (dj *DockerJob) Activate() {
+	logrus.Debugf("Activating: %s", dj.ID)
+	dj.Active = true
 }
