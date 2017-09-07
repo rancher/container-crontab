@@ -34,10 +34,12 @@ func NewEventRouter() (Router, error) {
 
 // StartRouter calls the listener function and takes the interface for testing
 func StartRouter(router Router, handler Handler) {
+
 loop:
 	for {
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		eventStream, errChan := router.Listen(ctx)
+		for {
 		select {
 		case event := <-eventStream:
 			handler.Handle(&event)
@@ -46,6 +48,7 @@ loop:
 			cancelFunc()
 			continue loop
 		}
+	}
 	}
 }
 
