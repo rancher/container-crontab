@@ -12,7 +12,7 @@ import (
 
 // Router Interface
 type Router interface {
-	Listen() (<-chan events.Message, <-chan error)
+	Listen(context.Context) (<-chan events.Message, <-chan error)
 }
 
 //DockerEventRouter is the Docker event handler implementation
@@ -34,19 +34,23 @@ func NewEventRouter() (Router, error) {
 
 // StartRouter calls the listener function and takes the interface for testing
 func StartRouter(router Router, handler Handler) {
+loop:
 	for {
-		eventStream, errChan := router.Listen()
+		ctx, cancelFunc := context.WithCancel(context.Background())
+		eventStream, errChan := router.Listen(ctx)
 		select {
 		case event := <-eventStream:
 			handler.Handle(&event)
 		case err := <-errChan:
 			logrus.Error(err)
+			cancelFunc()
+			continue loop
 		}
 	}
 }
 
 // Listen implements the Router interface
-func (de DockerEventRouter) Listen() (<-chan events.Message, <-chan error) {
+func (de DockerEventRouter) Listen(ctx context.Context) (<-chan events.Message, <-chan error) {
 	filterArgs := filters.NewArgs()
 	// Adds the cron job
 	filterArgs.Add("event", "start")
@@ -62,5 +66,5 @@ func (de DockerEventRouter) Listen() (<-chan events.Message, <-chan error) {
 		Filters: filterArgs,
 	}
 
-	return de.DockerClient.Events(context.Background(), eventOptions)
+	return de.DockerClient.Events(ctx, eventOptions)
 }
