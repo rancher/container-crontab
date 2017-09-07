@@ -19,7 +19,7 @@ func initMetrics() {
 	hostname, _ := os.Hostname()
 	activeJobGauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name:        "rancher_container_crontab_jobs",
+			Name:        "rancher_container_crontab_jobs_total",
 			Help:        "Number of container crontab job entries",
 			ConstLabels: prometheus.Labels{"hostname": hostname},
 		}, []string{"state"})
