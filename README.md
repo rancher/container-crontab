@@ -15,7 +15,7 @@ Standard Docker mode:
 
 Rancher Mode:
 
-`./bin/container-crontab --rancher-mode [--metadata-url http://rancher-metadta/latest]`
+`./bin/container-crontab --rancher-mode [--metadata-url http://rancher-metadata/latest]`
 
 ## Usage
 
@@ -52,7 +52,7 @@ Starting in v0.3.0 the container-crontab exposes a prometheus metrics endpoint `
 From that you can get a guage on the number of Jobs sliced by Active/Inactive states. It also provides other
 golang information about the program.
 
-`rancher_container_crontab_jobs_total{hostnmae, state}`
+`rancher_container_crontab_jobs_total{hostname, state}`
 
 ## License
 Copyright (c) 2014-2017 [Rancher Labs, Inc.](http://rancher.com)
