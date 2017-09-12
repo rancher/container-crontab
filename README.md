@@ -15,7 +15,7 @@ Standard Docker mode:
 
 Rancher Mode:
 
-`./bin/container-crontab --rancher-mode [--metadata-url http://rancher-metadta/latest]`
+`./bin/container-crontab --rancher-mode [--metadata-url http://rancher-metadata/latest]`
 
 ## Usage
 
