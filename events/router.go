@@ -40,15 +40,15 @@ loop:
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		eventStream, errChan := router.Listen(ctx)
 		for {
-		select {
-		case event := <-eventStream:
-			handler.Handle(&event)
-		case err := <-errChan:
-			logrus.Error(err)
-			cancelFunc()
-			continue loop
+			select {
+			case event := <-eventStream:
+				handler.Handle(&event)
+			case err := <-errChan:
+				logrus.Error(err)
+				cancelFunc()
+				continue loop
+			}
 		}
-	}
 	}
 }
 

@@ -2,6 +2,7 @@ package cron
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -153,7 +154,11 @@ func (ct *Crontab) setJobState(job *JobEntry) {
 	}
 
 	stackName := getRancherStackNameFromLabels(job.Job.Labels)
-	serviceName := getRancherServiceNameFromLabels(job.Job.Labels)
+
+	// The return value of getRancherServiceNameFromLabels for a sidekick is something like "mainname/sidekickname"
+	// but we only need "sidekickname" for this to work in the sidekick case
+	serviceStackName := strings.Split(getRancherServiceNameFromLabels(job.Job.Labels), "/")
+	serviceName := serviceStackName[len(serviceStackName)-1]
 	if stackName != "" && serviceName != "" {
 		state, err := ct.checkRancherMetadataServiceState(stackName, serviceName)
 		if err != nil {
