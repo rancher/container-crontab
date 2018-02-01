@@ -50,7 +50,7 @@ seconds you would like. For instance for 20 seconds: `cron.restart_timeout=20`.
 
 ## Metrics
 
-Starting in v0.3.0 the container-crontab exposes a prometheus metrics endpoint `http://<ip>:9191/metrics`.
+Starting in v0.3.0 the container-crontab exposes a prometheus metrics endpoint `http://<ip>:9191/metrics` when started with the `--metrics` CLI option.
 From that you can get a guage on the number of Jobs sliced by Active/Inactive states. It also provides other
 golang information about the program.
 
