@@ -123,19 +123,44 @@ func (ct *Crontab) DeactivateJob(id string, labels map[string]string) error {
 	return nil
 }
 
-func (ct *Crontab) checkRancherMetadataServiceState(stackName, serviceName string) (string, error) {
+func (ct *Crontab) checkRancherMetadataServiceState(uuid string) (string, error) {
+	service, err := ct.getRancherServiceByUUID(uuid)
+	return service.State, err
+}
+
+func (ct *Crontab) getRancherServiceUUID(stackName, serviceName string) (string, error) {
+	service, err := ct.getRancherServiceByStackServiceName(stackName, serviceName)
+	return service.UUID, err
+}
+
+func (ct *Crontab) getRancherServiceByStackServiceName(stackName, serviceName string) (metadata.Service, error) {
 	stack, err := ct.mdClient.GetStackByName(stackName)
 	if err != nil {
-		return "", err
+		return metadata.Service{}, err
 	}
 
 	for _, service := range stack.Services {
 		if service.Name == serviceName {
-			return service.State, nil
+			return service, nil
 		}
 	}
 
-	return "", nil
+	return metadata.Service{}, fmt.Errorf("service: %s not found in stack: %s", serviceName, stackName)
+}
+
+func (ct *Crontab) getRancherServiceByUUID(uuid string) (metadata.Service, error) {
+	services, err := ct.mdClient.GetServices()
+	if err != nil {
+		return metadata.Service{}, err
+	}
+
+	for _, service := range services {
+		if service.UUID == uuid {
+			return service, nil
+		}
+	}
+
+	return metadata.Service{}, fmt.Errorf("service with uuid: %s not found", uuid)
 }
 
 func (ct *Crontab) watchRancherMetadata() {
@@ -153,27 +178,35 @@ func (ct *Crontab) setJobState(job *JobEntry) {
 		return
 	}
 
-	stackName := getRancherStackNameFromLabels(job.Job.Labels)
+	var err error
 
-	// The return value of getRancherServiceNameFromLabels for a sidekick is something like "mainname/sidekickname"
-	// but we only need "sidekickname" for this to work in the sidekick case
-	serviceStackName := strings.Split(getRancherServiceNameFromLabels(job.Job.Labels), "/")
-	serviceName := serviceStackName[len(serviceStackName)-1]
-	if stackName != "" && serviceName != "" {
-		state, err := ct.checkRancherMetadataServiceState(stackName, serviceName)
+	if job.Job.RancherServiceUUID == "" {
+		stackName := getRancherStackNameFromLabels(job.Job.Labels)
+
+		// The return value of getRancherServiceNameFromLabels for a sidekick is something like "mainname/sidekickname"
+		// but we only need "sidekickname" for this to work in the sidekick case
+		serviceStackName := strings.Split(getRancherServiceNameFromLabels(job.Job.Labels), "/")
+		serviceName := serviceStackName[len(serviceStackName)-1]
+		job.Job.RancherServiceUUID, err = ct.getRancherServiceUUID(stackName, serviceName)
 		if err != nil {
 			logrus.Error(err)
 		}
 
-		// if the job is inactive...activate
-		if state == "active" && !job.Job.Active {
-			job.Job.Activate()
-		}
+	}
 
-		// if the job is active... Deactivate
-		if state != "active" && job.Job.Active {
-			job.Job.Deactivate()
-		}
+	state, err := ct.checkRancherMetadataServiceState(job.Job.RancherServiceUUID)
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	// if the job is inactive...activate
+	if state == "active" && !job.Job.Active {
+		job.Job.Activate()
+	}
+
+	// if the job is active... Deactivate
+	if state != "active" && job.Job.Active {
+		job.Job.Deactivate()
 	}
 }
 

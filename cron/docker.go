@@ -12,14 +12,15 @@ import (
 
 // DockerJob implements the cron job interface
 type DockerJob struct {
-	ID             string
-	Action         string
-	Schedule       string
-	Leader         bool
-	Labels         map[string]string
-	Active         bool
-	lastError      error
-	restartTimeout time.Duration
+	ID                 string
+	Action             string
+	Schedule           string
+	Leader             bool
+	Labels             map[string]string
+	RancherServiceUUID string
+	Active             bool
+	lastError          error
+	restartTimeout     time.Duration
 }
 
 // Err returns last error message
