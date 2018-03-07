@@ -140,7 +140,9 @@ func (ct *Crontab) getRancherServiceByStackServiceName(stackName, serviceName st
 	}
 
 	for _, service := range stack.Services {
-		if service.Name == serviceName {
+		logrus.Debugf("Comparing %s with %s", service.Name, serviceName)
+		if strings.EqualFold(service.Name, serviceName) {
+			logrus.Debugf("Returning state: %s for service: %s", service.State, service.Name)
 			return service, nil
 		}
 	}
