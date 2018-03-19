@@ -13,6 +13,13 @@ TAG=${TAG:-${VERSION}${SUFFIX}}
 REPO=${REPO:-rancher}
 
 cp ../bin/container-crontab .
-docker build -t ${REPO}/container-crontab:${TAG} .
 
-echo Built ${REPO}/container-crontab:${TAG}
+if dapper -d --build -f Dockerfile -- -t ${REPO}/container-crontab:${TAG}${SUFFIX} .; then
+    echo Built ${REPO}/container-crontab:${TAG}
+elif [ "$?" != "42" ]; then
+    exit 1
+else
+    echo "Skipping ${TAG}"
+    exit 0
+fi
+
