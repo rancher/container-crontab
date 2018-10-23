@@ -13,7 +13,7 @@ import (
 
 // Handler handles messages
 type Handler interface {
-	Handle(Message)
+	Handle(Message, string)
 }
 
 // Message is a message from an event stream
@@ -26,6 +26,7 @@ type DockerHandler struct {
 
 type DockerHandlerOpts struct {
 	RancherMode bool
+	LabelNamespace string
 	MetadataURL string
 }
 
@@ -61,8 +62,8 @@ func NewDockerHandler(opts *DockerHandlerOpts) (*DockerHandler, error) {
 	// Scan containers
 	logrus.Infof("Scanning for container cron entries")
 	for _, container := range containers {
-		if _, ok := container.Labels["cron.schedule"]; ok {
-			crontab.AddJob(container.ID, container.Labels, "docker")
+		if _, ok := container.Labels[opts.LabelNamespace + ".schedule"]; ok {
+			crontab.AddJob(container.ID, container.Labels, "docker", opts.LabelNamespace)
 		}
 	}
 
@@ -72,13 +73,13 @@ func NewDockerHandler(opts *DockerHandlerOpts) (*DockerHandler, error) {
 }
 
 // Handle implements handler interface
-func (dh DockerHandler) Handle(msg Message) {
+func (dh DockerHandler) Handle(msg Message, labelNamespace string) {
 	// Adding a cron.schedule label flags the container for deeper inspection
 	// With this service
-	if _, ok := msg.Actor.Attributes["cron.schedule"]; ok {
+	if _, ok := msg.Actor.Attributes[labelNamespace + ".schedule"]; ok {
 		if msg.Action == "start" || msg.Action == "create" {
 			logrus.Debugf("Processing %s event for container: %s", msg.Action, msg.ID)
-			dh.Crontab.AddJob(msg.ID, msg.Actor.Attributes, "docker")
+			dh.Crontab.AddJob(msg.ID, msg.Actor.Attributes, "docker", labelNamespace)
 		}
 
 		if msg.Action == "stop" || msg.Action == "die" {

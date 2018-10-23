@@ -33,7 +33,7 @@ func NewEventRouter() (Router, error) {
 }
 
 // StartRouter calls the listener function and takes the interface for testing
-func StartRouter(router Router, handler Handler) {
+func StartRouter(router Router, handler Handler, labelNamespace string) {
 
 loop:
 	for {
@@ -42,7 +42,7 @@ loop:
 		for {
 			select {
 			case event := <-eventStream:
-				handler.Handle(&event)
+				handler.Handle(&event, labelNamespace)
 			case err := <-errChan:
 				logrus.Error(err)
 				cancelFunc()

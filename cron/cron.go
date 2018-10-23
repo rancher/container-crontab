@@ -65,7 +65,7 @@ func (ct *Crontab) GetEntries() []cron.Entry {
 }
 
 // AddJob Adds a docker job to the crontab
-func (ct *Crontab) AddJob(id string, labels map[string]string, jobType string) error {
+func (ct *Crontab) AddJob(id string, labels map[string]string, jobType string, labelNamespace string) error {
 	var job *DockerJob
 
 	if _, ok := ct.jobs[id]; ok {
@@ -73,14 +73,14 @@ func (ct *Crontab) AddJob(id string, labels map[string]string, jobType string) e
 		return nil
 	}
 
-	schedule, ok := labels["cron.schedule"]
+	schedule, ok := labels[labelNamespace + ".schedule"]
 	if !ok {
 		return fmt.Errorf("No cron schedule found for container: %s", id)
 	}
 
 	switch jobType {
 	case "docker":
-		job = NewDockerJob(id, labels)
+		job = NewDockerJob(id, labels, labelNamespace)
 	default:
 		logrus.Warnf("Unknown job type: %s", jobType)
 	}

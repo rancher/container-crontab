@@ -15,6 +15,7 @@ type DockerJob struct {
 	ID                 string
 	Action             string
 	Schedule           string
+	LabelNamespace     string
 	Leader             bool
 	Labels             map[string]string
 	RancherServiceUUID string
@@ -93,10 +94,11 @@ func getDockerClient() (*client.Client, error) {
 }
 
 // NewDockerJob creates a DockerJob and sets defaults
-func NewDockerJob(id string, labels map[string]string) *DockerJob {
+func NewDockerJob(id string, labels map[string]string, labelNamespace string) *DockerJob {
 	dj := &DockerJob{
 		ID:             id,
-		Schedule:       labels["cron.schedule"],
+		Schedule:       labels[labelNamespace + ".schedule"],
+		LabelNamespace: labelNamespace,
 		Labels:         labels,
 		Action:         "start",
 		Leader:         false,
@@ -105,15 +107,15 @@ func NewDockerJob(id string, labels map[string]string) *DockerJob {
 		restartTimeout: getDuration(10),
 	}
 
-	if value, ok := labels["cron.action"]; ok {
+	if value, ok := labels[labelNamespace + ".action"]; ok {
 		dj.Action = value
 	}
 
-	if _, ok := labels["cron.leader"]; ok {
+	if _, ok := labels[labelNamespace + ".leader"]; ok {
 		dj.Leader = true
 	}
 
-	if TO, ok := labels["cron.restart_timeout"]; ok {
+	if TO, ok := labels[labelNamespace + ".restart_timeout"]; ok {
 		i, err := strconv.Atoi(TO)
 		if err != nil {
 			logrus.Error("Error converting cron.restart_timeout to int, sticking with default of 10seconds")

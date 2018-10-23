@@ -37,6 +37,11 @@ func main() {
 			Usage: "Allow Rancher ",
 		},
 		cli.StringFlag{
+			Name:  "label-namespace,ln",
+			Value: "cron",
+			Usage: "Label Namespace, default: 'cron'",
+		},
+		cli.StringFlag{
 			Name:  "metadata-url",
 			Value: MetadataURL,
 			Usage: "Provide full URL of Metadata",
@@ -52,6 +57,7 @@ func main() {
 func start(c *cli.Context) error {
 	handler, err := events.NewDockerHandler(&events.DockerHandlerOpts{
 		RancherMode: c.GlobalBool("rancher-mode"),
+		LabelNamespace: c.GlobalString("label-namespace"),
 		MetadataURL: c.GlobalString("metadata-url"),
 	})
 	if err != nil {
@@ -67,7 +73,7 @@ func start(c *cli.Context) error {
 		go MetricsServer(handler)
 	}
 
-	events.StartRouter(router, handler)
+	events.StartRouter(router, handler, c.GlobalString("label-namespace"))
 
 	return nil
 }
